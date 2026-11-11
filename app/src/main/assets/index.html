@@ -1039,13 +1039,94 @@ function prosesPembayaran() {
     updateDashboardTransaksi();
 }
 
- 
+
 function cetakStruk(data) {
 
+    // Ukuran kertas yang dipilih
+    let ukuran = document.getElementById('ukuranKertas')?.value || '58';
+
+    // Lebar karakter
+    let lebar = ukuran === '80' ? 48 : 32;
+
+    function garis() {
+        return '-'.repeat(lebar);
+    }
+
+    function tengah(teks) {
+        teks = String(teks);
+        return teks.substring(0, lebar).padStart(
+            Math.floor((lebar + teks.length) / 2)
+        );
+    }
+
+    function rupiahPendek(nilai) {
+        return rupiah(nilai);
+    }
+
+    // Susun struk untuk printer thermal
+    let teks = '';
+
+    teks += tengah('KASIR MINIMARKET') + '\n';
+    teks += tengah('STRUK PEMBELIAN') + '\n';
+    teks += garis() + '\n';
+
+    teks += new Date(data.tanggal).toLocaleString('id-ID') + '\n';
+    teks += garis() + '\n';
+
+    data.items.forEach(item => {
+
+        let subtotal =
+            Number(item.harga) * Number(item.jumlah);
+
+        teks += String(item.nama).substring(0, lebar) + '\n';
+
+        teks +=
+            item.jumlah + ' x ' +
+            rupiahPendek(item.harga) + '\n';
+
+        teks +=
+            'Subtotal: ' +
+            rupiahPendek(subtotal) + '\n';
+    });
+
+    teks += garis() + '\n';
+    teks += 'TOTAL: ' + rupiahPendek(data.total) + '\n';
+    teks += 'Dibayar: ' + rupiahPendek(data.bayar) + '\n';
+    teks += 'Kembali: ' + rupiahPendek(data.kembalian) + '\n';
+    teks += 'Metode: ' + data.metode + '\n';
+
+    teks += garis() + '\n';
+    teks += tengah('Terima kasih') + '\n';
+    teks += tengah('Selamat berbelanja') + '\n';
+    teks += '\n\n\n';
+
+    // Jika printer Bluetooth terhubung
+    if (
+        typeof Android !== 'undefined' &&
+        window.printerBluetoothAktif === true
+    ) {
+        Android.cetakBluetooth(teks);
+        return;
+    }
+
+    // Jika belum terhubung, gunakan cetak PDF Android
+    if (typeof Android !== 'undefined') {
+        alert('Printer Bluetooth belum terhubung. Membuka cetak PDF.');
+        cetakStrukPDF(data);
+    } else {
+        alert('Fitur cetak Android tidak tersedia!');
+    }
+}
+
+function cetakStrukPDF(data) {
+
+    // Gunakan format HTML lama untuk PDF
     let daftarBarang = '';
 
     data.items.forEach(item => {
-        let subtotal = Number(item.harga) * Number(item.jumlah);
+
+        let subtotal =
+            Number(item.harga) * Number(item.jumlah);
 
         daftarBarang += `
             <tr>
@@ -1068,29 +1149,24 @@ function cetakStruk(data) {
                     padding: 15px;
                     color: #000;
                 }
-
                 h2, h3, p {
                     text-align: center;
                     margin: 5px 0;
                 }
-
                 table {
                     width: 100%;
                     border-collapse: collapse;
                     margin-top: 15px;
                     font-size: 12px;
                 }
-
                 th, td {
                     border-bottom: 1px dashed #555;
                     padding: 7px 3px;
                     text-align: left;
                 }
-
                 .kanan {
                     text-align: right;
                 }
-
                 .total {
                     font-size: 18px;
                     font-weight: bold;
@@ -1101,9 +1177,7 @@ function cetakStruk(data) {
             <h2>KASIR MINIMARKET</h2>
             <p>Struk Pembelian</p>
             <hr>
-
             <p>${new Date(data.tanggal).toLocaleString('id-ID')}</p>
-
             <table>
                 <thead>
                     <tr>
@@ -1113,37 +1187,23 @@ function cetakStruk(data) {
                         <th>Subtotal</th>
                     </tr>
                 </thead>
-                <tbody>
-                    ${daftarBarang}
-                </tbody>
+                <tbody>${daftarBarang}</tbody>
             </table>
-
             <hr>
-            <p class="kanan total">
-                Total: ${rupiah(data.total)}
-            </p>
-            <p class="kanan">
-                Dibayar: ${rupiah(data.bayar)}
-            </p>
-            <p class="kanan">
-                Kembalian: ${rupiah(data.kembalian)}
-            </p>
-            <p class="kanan">
-                Metode: ${escapeHTML(data.metode)}
-            </p>
-
+            <p class="kanan total">Total: ${rupiah(data.total)}</p>
+            <p class="kanan">Dibayar: ${rupiah(data.bayar)}</p>
+            <p class="kanan">Kembalian: ${rupiah(data.kembalian)}</p>
+            <p class="kanan">Metode: ${escapeHTML(data.metode)}</p>
             <hr>
             <p>Terima kasih telah berbelanja</p>
         </body>
         </html>
     `;
 
-    if (typeof Android !== 'undefined') {
-        Android.cetakHTML(isi, 'Struk-Kasir-Minimarket');
-    } else {
-        alert('Fitur cetak Android tidak tersedia!');
-    }
+    Android.cetakHTML(isi, 'Struk-Kasir-Minimarket');
 }
+ 
+
    
 function updateDashboardTransaksi() {
 
@@ -1272,6 +1332,7 @@ function laporanHariIni() {
     tampilkanLaporan();
 }
  
+  
 function cetakLaporan() {
 
     let tanggal = document.getElementById('tanggalLaporan').value;
@@ -1307,6 +1368,45 @@ function cetakLaporan() {
         laba += Number(t.laba) || 0;
     });
 
+    // Susun laporan untuk printer thermal
+    let ukuran = document.getElementById('ukuranKertas')?.value || '58';
+    let lebar = ukuran === '80' ? 48 : 32;
+
+    let teks = '';
+
+    function garis() {
+        return '-'.repeat(lebar);
+    }
+
+    function tengah(teksIsi) {
+        teksIsi = String(teksIsi);
+        return teksIsi.substring(0, lebar).padStart(
+            Math.floor((lebar + teksIsi.length) / 2)
+        );
+    }
+
+    teks += tengah('KASIR MINIMARKET') + '\n';
+    teks += tengah('LAPORAN PENJUALAN') + '\n';
+    teks += garis() + '\n';
+    teks += 'Tanggal: ' + tanggal + '\n';
+    teks += garis() + '\n';
+    teks += 'Total Omzet: ' + rupiah(omzet) + '\n';
+    teks += 'Total Modal: ' + rupiah(modal) + '\n';
+    teks += 'Keuntungan: ' + rupiah(laba) + '\n';
+    teks += 'Transaksi: ' + data.length + '\n';
+    teks += garis() + '\n';
+    teks += tengah('Laporan Kasir Minimarket') + '\n';
+    teks += '\n\n\n';
+
+    if (
+        typeof Android !== 'undefined' &&
+        window.printerBluetoothAktif === true
+    ) {
+        Android.cetakBluetooth(teks);
+        return;
+    }
+
+    // PDF Android jika Bluetooth belum terhubung
     let isi = `
         <!DOCTYPE html>
         <html>
@@ -1343,15 +1443,12 @@ function cetakLaporan() {
     `;
 
     if (typeof Android !== 'undefined') {
-        Android.cetakHTML(
-            isi,
-            'Laporan-Kasir-Minimarket'
-        );
+        Android.cetakHTML(isi, 'Laporan-Kasir-Minimarket');
     } else {
         alert('Fitur cetak Android tidak tersedia!');
     }
 }
-   
+
     
 function tampilkanLaporan() {
     let tanggal = document.getElementById('tanggalLaporan').value;
@@ -1709,6 +1806,18 @@ function sambungkanPrinter() {
 
     Android.hubungkanPrinter(alamat);
 }
+ function statusKoneksiPrinter(berhasil) {
+
+    window.printerBluetoothAktif = berhasil;
+
+    let status = document.getElementById('statusPrinter');
+
+    if (berhasil) {
+        status.textContent = '🟢 Printer berhasil terhubung';
+    } else {
+        status.textContent = '🔴 Gagal terhubung ke printer';
+    }
+}   
 </script>
 
 </body>
