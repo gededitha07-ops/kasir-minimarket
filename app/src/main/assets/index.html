@@ -18,6 +18,48 @@ body {
     color: #1e293b;
 }
 
+<div id="halamanLogin" style="
+    position:fixed;
+    inset:0;
+    background:#f3f4f6;
+    z-index:9999;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+">
+    <div class="card" style="
+        width:100%;
+        max-width:400px;
+        padding:25px;
+        text-align:center;
+    ">
+        <h2>🏪 KASIR MINIMARKET</h2>
+        <h3>Login Aplikasi</h3>
+
+        <label>Pilih Pengguna</label>
+        <select id="jenisLogin">
+            <option value="kasir">Kasir</option>
+            <option value="pemilik">Pemilik</option>
+        </select>
+
+        <label>Masukkan PIN</label>
+        <input
+            type="password"
+            id="pinLogin"
+            inputmode="numeric"
+            maxlength="6"
+            placeholder="Masukkan 6 angka"
+        >
+
+        <button onclick="prosesLogin()" style="width:100%">
+            MASUK
+        </button>
+
+        <p id="pesanLogin"></p>
+    </div>
+</div>
+
 header {
     background: #166534;
     color: white;
@@ -151,6 +193,17 @@ td, th {
 <header>
     <h2>🏪 KASIR MINIMARKET</h2>
     <p>Sistem Kasir dan Manajemen Toko</p>
+    
+<button onclick="logout()" style="
+    background:#dc2626;
+    color:white;
+    padding:10px 20px;
+    border:none;
+    border-radius:8px;
+">
+    KELUAR / LOGOUT
+</button>
+
 </header>
 
 <div class="container">
@@ -379,24 +432,114 @@ td, th {
 
 
 <section id="laporan" class="menu">
+    <h2>Laporan Penjualan</h2>
 
-    <h3>Laporan Penjualan</h3>
+    <label>Pilih Tanggal</label>
+    <input
+        type="date"
+        id="tanggalLaporan"
+        onchange="tampilkanLaporan()"
+    >
 
-    <div class="card">
-        <p>Laporan harian dan bulanan akan dibuat berikutnya.</p>
+    <button onclick="laporanHariIni()">
+        Laporan Hari Ini
+    </button>
+
+    <div class="item">
+        <b>Total Omzet</b>
+        <h2 id="laporanOmzet">Rp0</h2>
     </div>
 
+    <div class="item">
+        <b>Total Modal</b>
+        <h2 id="laporanModal">Rp0</h2>
+    </div>
+
+    <div class="item">
+        <b>Total Keuntungan</b>
+        <h2 id="laporanLaba">Rp0</h2>
+    </div>
+
+    <div class="item">
+        <b>Jumlah Transaksi</b>
+        <h2 id="laporanJumlah">0</h2>
+    </div>
 </section>
+
 
 <section id="pengaturan" class="menu">
 
     <h3>Pengaturan</h3>
 
     <div class="card">
-        <p>Pengaturan toko, PIN dan backup data akan dibuat berikutnya.</p>
+        <h3>Keamanan Aplikasi</h3>
+        <label>PIN Pemilik Lama</label>
+<input
+    type="password"
+    id="pinPemilikLama"
+    inputmode="numeric"
+    maxlength="6"
+    placeholder="Masukkan PIN lama"
+>
+
+        <label>PIN Pemilik</label>
+        <input
+            type="password"
+            id="pinPemilikBaru"
+            inputmode="numeric"
+            maxlength="6"
+            placeholder="Masukkan PIN baru"
+        >
+
+        <label>Ulangi PIN Pemilik</label>
+        <input
+            type="password"
+            id="ulangPinPemilik"
+            inputmode="numeric"
+            maxlength="6"
+            placeholder="Ulangi PIN"
+        >
+
+        <button onclick="gantiPinPemilik()">
+            Simpan PIN Pemilik
+        </button>
+
+        <hr>
+        <label>PIN Kasir Lama</label>
+<input
+    type="password"
+    id="pinKasirLama"
+    inputmode="numeric"
+    maxlength="6"
+    placeholder="Masukkan PIN lama"
+>
+        <label>PIN Kasir</label>
+        <input
+            type="password"
+            id="pinKasirBaru"
+            inputmode="numeric"
+            maxlength="6"
+            placeholder="Masukkan PIN baru"
+        >
+
+        <label>Ulangi PIN Kasir</label>
+        <input
+            type="password"
+            id="ulangPinKasir"
+            inputmode="numeric"
+            maxlength="6"
+            placeholder="Ulangi PIN"
+        >
+
+        <button onclick="gantiPinKasir()">
+            Simpan PIN Kasir
+        </button>
     </div>
 
 </section>
+
+
+
 
 </div>
 
@@ -411,7 +554,16 @@ td, th {
 
 <script>
 
-function bukaMenu(id,tombol) {
+function bukaMenu(id, tombol) {
+
+    // Kasir tidak boleh membuka Produk dan Pengaturan
+    if (
+        penggunaAktif === 'kasir' &&
+        (id === 'produk' || id === 'pengaturan')
+    ) {
+        alert('Menu ini hanya dapat dibuka oleh Pemilik!');
+        return;
+    }
 
     document.querySelectorAll('.menu').forEach(el => {
         el.classList.remove('active');
@@ -423,8 +575,21 @@ function bukaMenu(id,tombol) {
         el.classList.remove('active');
     });
 
-    tombol.classList.add('active');
+    if (tombol) {
+        tombol.classList.add('active');
+    }
+
+    // Perbarui tampilan sesuai menu
+    if (id === 'riwayat') {
+        tampilkanRiwayat();
+    }
+
+    if (id === 'laporan') {
+        laporanHariIni();
+    }
 }
+
+
 
 let produk = JSON.parse(
     localStorage.getItem('produk') || '[]'
@@ -442,7 +607,11 @@ function rupiah(angka) {
 }
 
 function simpanProduk() {
-
+    
+    if (penggunaAktif !== 'pemilik') {
+        alert('Hanya Pemilik yang boleh mengelola produk!');
+        return;
+    }
     let nama = document.getElementById('namaProduk').value.trim();
     let kategori = document.getElementById('kategoriProduk').value;
     let modal = Number(document.getElementById('modalProduk').value);
@@ -536,9 +705,20 @@ function escapeHTML(teks) {
     });
 }
 
+
 function editProduk(i) {
 
+    if (penggunaAktif !== 'pemilik') {
+        alert('Hanya Pemilik yang boleh mengedit produk!');
+        return;
+    }
+
     let p = produk[i];
+
+    if (!p) {
+        alert('Produk tidak ditemukan');
+        return;
+    }
 
     document.getElementById('editIndex').value = i;
     document.getElementById('namaProduk').value = p.nama;
@@ -552,7 +732,13 @@ function editProduk(i) {
     document.getElementById('produk').scrollIntoView();
 }
 
+
 function hapusProduk(i) {
+
+    if (penggunaAktif !== 'pemilik') {
+        alert('Hanya Pemilik yang boleh menghapus produk!');
+        return;
+    }
 
     if (!confirm('Yakin ingin menghapus produk ini?')) return;
 
@@ -564,6 +750,7 @@ function hapusProduk(i) {
 
     alert('Produk berhasil dihapus');
 }
+
 
 function resetFormProduk() {
 
@@ -911,6 +1098,216 @@ function lihatDetailTransaksi(index) {
         '\nKembalian: ' + rupiah(t.kembalian) +
         '\nMetode: ' + (t.metode || '-')
     );
+}
+
+function tanggalSekarang() {
+    let sekarang = new Date();
+
+    return sekarang.getFullYear() + '-' +
+        String(sekarang.getMonth() + 1).padStart(2, '0') + '-' +
+        String(sekarang.getDate()).padStart(2, '0');
+}
+
+function laporanHariIni() {
+    document.getElementById('tanggalLaporan').value =
+        tanggalSekarang();
+
+    tampilkanLaporan();
+}
+
+function tampilkanLaporan() {
+    let tanggal = document.getElementById('tanggalLaporan').value;
+
+    if (!tanggal) {
+        alert('Silakan pilih tanggal laporan');
+        return;
+    }
+
+    let data = transaksi.filter(t => {
+        let waktu = new Date(t.tanggal);
+
+        let tanggalTransaksi =
+            waktu.getFullYear() + '-' +
+            String(waktu.getMonth() + 1).padStart(2, '0') + '-' +
+            String(waktu.getDate()).padStart(2, '0');
+
+        return tanggalTransaksi === tanggal;
+    });
+
+    let omzet = 0;
+    let modal = 0;
+    let laba = 0;
+
+    data.forEach(t => {
+        omzet += Number(t.total) || 0;
+        modal += Number(t.modal) || 0;
+        laba += Number(t.laba) || 0;
+    });
+
+    document.getElementById('laporanOmzet').innerText =
+        rupiah(omzet);
+
+    document.getElementById('laporanModal').innerText =
+        rupiah(modal);
+
+    document.getElementById('laporanLaba').innerText =
+        rupiah(laba);
+
+    document.getElementById('laporanJumlah').innerText =
+        data.length;
+}
+
+// PIN awal aplikasi
+if (!localStorage.getItem('pinPemilik')) {
+    localStorage.setItem('pinPemilik', '123456');
+}
+
+if (!localStorage.getItem('pinKasir')) {
+    localStorage.setItem('pinKasir', '111111');
+}
+
+// Fungsi mengganti PIN Pemilik
+function gantiPinPemilik() {
+        if (penggunaAktif !== 'pemilik') {
+        alert('Hanya Pemilik yang boleh mengganti PIN!');
+        return;
+    }
+    let lama = document.getElementById('pinPemilikLama').value;
+    let baru = document.getElementById('pinPemilikBaru').value;
+    let ulang = document.getElementById('ulangPinPemilik').value;
+
+    let pinSekarang = localStorage.getItem('pinPemilik');
+
+    if (lama !== pinSekarang) {
+        alert('PIN Pemilik lama salah!');
+        return;
+    }
+
+    if (!/^\d{6}$/.test(baru)) {
+        alert('PIN baru harus terdiri dari 6 angka!');
+        return;
+    }
+
+    if (baru !== ulang) {
+        alert('Ulangan PIN tidak sama!');
+        return;
+    }
+
+    localStorage.setItem('pinPemilik', baru);
+
+    alert('PIN Pemilik berhasil diganti!');
+
+    document.getElementById('pinPemilikLama').value = '';
+    document.getElementById('pinPemilikBaru').value = '';
+    document.getElementById('ulangPinPemilik').value = '';
+}
+
+// Fungsi mengganti PIN Kasir
+function gantiPinKasir() {
+        if (penggunaAktif !== 'pemilik') {
+        alert('Hanya Pemilik yang boleh mengganti PIN!');
+        return;
+    }
+    let lama = document.getElementById('pinKasirLama').value;
+    let baru = document.getElementById('pinKasirBaru').value;
+    let ulang = document.getElementById('ulangPinKasir').value;
+
+    let pinSekarang = localStorage.getItem('pinKasir');
+
+    if (lama !== pinSekarang) {
+        alert('PIN Kasir lama salah!');
+        return;
+    }
+
+    if (!/^\d{6}$/.test(baru)) {
+        alert('PIN baru harus terdiri dari 6 angka!');
+        return;
+    }
+
+    if (baru !== ulang) {
+        alert('Ulangan PIN tidak sama!');
+        return;
+    }
+
+    localStorage.setItem('pinKasir', baru);
+
+    alert('PIN Kasir berhasil diganti!');
+
+    document.getElementById('pinKasirLama').value = '';
+    document.getElementById('pinKasirBaru').value = '';
+    document.getElementById('ulangPinKasir').value = '';
+}
+
+let penggunaAktif = '';
+
+function prosesLogin() {
+    let jenis = document.getElementById('jenisLogin').value;
+    let pin = document.getElementById('pinLogin').value;
+
+    let pinBenar = jenis === 'pemilik'
+        ? localStorage.getItem('pinPemilik')
+        : localStorage.getItem('pinKasir');
+
+    if (pin !== pinBenar) {
+        document.getElementById('pesanLogin').innerText =
+            'PIN salah! Silakan coba lagi.';
+
+        document.getElementById('pinLogin').value = '';
+        return;
+    }
+
+    penggunaAktif = jenis;
+    
+    // Atur tombol menu berdasarkan pengguna
+    
+document.querySelectorAll('nav button').forEach(tombol => {
+    let menu = tombol.getAttribute('onclick') || '';
+
+    let menuKhusus =
+        menu.includes("'produk'") ||
+        menu.includes("'pengaturan'");
+
+    tombol.style.display =
+        (jenis === 'kasir' && menuKhusus) ? 'none' : '';
+});
+
+
+
+    document.getElementById('halamanLogin').style.display = 'none';
+
+    document.getElementById('pinLogin').value = '';
+
+    alert(
+        jenis === 'pemilik'
+            ? 'Selamat datang, Pemilik!'
+            : 'Selamat datang, Kasir!'
+    );
+}
+
+function logout() {
+    if (!confirm('Yakin ingin keluar dari aplikasi?')) {
+        return;
+    }
+
+    penggunaAktif = '';
+
+    document.getElementById('halamanLogin').style.display = 'flex';
+    document.getElementById('pinLogin').value = '';
+    document.getElementById('pesanLogin').innerText = '';
+
+    document.getElementById('jenisLogin').value = 'kasir';
+
+    // Tampilkan kembali semua tombol menu
+    document.querySelectorAll('nav button').forEach(tombol => {
+        tombol.style.display = '';
+        tombol.classList.remove('active');
+    });
+
+    document.querySelectorAll('.menu').forEach(menu => {
+        menu.classList.remove('active');
+    });
+
+    document.getElementById('dashboard').classList.add('active');
 }
     
 tampilkanProduk();
