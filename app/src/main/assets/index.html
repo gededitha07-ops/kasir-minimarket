@@ -535,7 +535,21 @@ td, th {
             Simpan PIN Kasir
         </button>
     </div>
+<div class="card">
+    <h3>Backup dan Restore Data</h3>
 
+    <p>
+        Simpan data produk dan transaksi agar tidak hilang.
+    </p>
+
+    <button onclick="backupData()">
+        BACKUP DATA
+    </button>
+
+    <button onclick="restoreData()">
+        RESTORE DATA
+    </button>
+</div>
 </section>
 
 
@@ -1317,6 +1331,120 @@ tampilkanPilihanProduk();
 tampilkanKeranjang();
 updateDashboardTransaksi();
 tampilkanRiwayat();
+ // Kunci aplikasi saat pertama kali dibuka
+penggunaAktif = '';
+
+document.getElementById('halamanLogin').style.display = 'flex';
+
+document.querySelectorAll('.menu').forEach(menu => {
+    menu.classList.remove('active');
+});
+
+document.querySelectorAll('nav button').forEach(tombol => {
+    tombol.style.display = '';
+    tombol.classList.remove('active');
+});
+
+document.getElementById('dashboard').classList.add('active');  
+function backupData() {
+
+    if (penggunaAktif !== 'pemilik') {
+        alert('Hanya Pemilik yang boleh melakukan backup!');
+        return;
+    }
+
+    let dataBackup = {
+        produk: produk,
+        transaksi: transaksi
+    };
+
+    let isiFile = JSON.stringify(dataBackup, null, 2);
+
+    let blob = new Blob(
+        [isiFile],
+        { type: 'application/json' }
+    );
+
+    let url = URL.createObjectURL(blob);
+
+    let link = document.createElement('a');
+    link.href = url;
+    link.download = 'backup-kasir-minimarket.json';
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+
+    alert('Backup data berhasil dibuat!');
+}
+ function restoreData() {
+
+    if (penggunaAktif !== 'pemilik') {
+        alert('Hanya Pemilik yang boleh melakukan restore!');
+        return;
+    }
+
+    let pilihFile = document.createElement('input');
+    pilihFile.type = 'file';
+    pilihFile.accept = '.json,application/json';
+
+    pilihFile.onchange = function(event) {
+
+        let file = event.target.files[0];
+
+        if (!file) return;
+
+        let pembaca = new FileReader();
+
+        pembaca.onload = function(e) {
+
+            try {
+                let data = JSON.parse(e.target.result);
+
+                if (
+                    !data ||
+                    !Array.isArray(data.produk) ||
+                    !Array.isArray(data.transaksi)
+                ) {
+                    alert('File backup tidak valid!');
+                    return;
+                }
+
+                if (!confirm(
+                    'Restore akan mengganti seluruh data produk dan transaksi saat ini. Lanjutkan?'
+                )) {
+                    return;
+                }
+
+                produk = data.produk;
+                transaksi = data.transaksi;
+
+                simpanDataProduk();
+                simpanDataTransaksi();
+
+                keranjang = [];
+
+                tampilkanProduk();
+                tampilkanPilihanProduk();
+                tampilkanKeranjang();
+                tampilkanRiwayat();
+                updateDashboard();
+                updateDashboardTransaksi();
+
+                alert('Restore data berhasil!');
+
+            } catch (error) {
+                alert('File backup tidak dapat dibaca!');
+            }
+        };
+
+        pembaca.readAsText(file);
+    };
+
+    pilihFile.click();
+}   
 </script>
 
 </body>
