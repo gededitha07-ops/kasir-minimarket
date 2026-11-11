@@ -1366,72 +1366,67 @@ function backupData() {
         alert('Fitur backup Android tidak tersedia!');
     }
 }
- function restoreData() {
+
+
+function restoreData() {
 
     if (penggunaAktif !== 'pemilik') {
         alert('Hanya Pemilik yang boleh melakukan restore!');
         return;
     }
 
-    let pilihFile = document.createElement('input');
-    pilihFile.type = 'file';
-    pilihFile.accept = '.json,application/json';
+    if (typeof Android !== 'undefined') {
+        Android.pilihRestore();
+    } else {
+        alert('Fitur restore Android tidak tersedia!');
+    }
+}
+function restoreDariAndroid(isiFile) {
 
-    pilihFile.onchange = function(event) {
+    if (penggunaAktif !== 'pemilik') {
+        alert('Hanya Pemilik yang boleh melakukan restore!');
+        return;
+    }
 
-        let file = event.target.files[0];
+    try {
+        let data = JSON.parse(isiFile);
 
-        if (!file) return;
+        if (
+            !data ||
+            !Array.isArray(data.produk) ||
+            !Array.isArray(data.transaksi)
+        ) {
+            alert('File backup tidak valid!');
+            return;
+        }
 
-        let pembaca = new FileReader();
+        if (!confirm(
+            'Semua data produk dan transaksi saat ini akan diganti. Lanjutkan?'
+        )) {
+            return;
+        }
 
-        pembaca.onload = function(e) {
+        produk = data.produk;
+        transaksi = data.transaksi;
+        keranjang = [];
 
-            try {
-                let data = JSON.parse(e.target.result);
+        simpanDataProduk();
+        simpanDataTransaksi();
 
-                if (
-                    !data ||
-                    !Array.isArray(data.produk) ||
-                    !Array.isArray(data.transaksi)
-                ) {
-                    alert('File backup tidak valid!');
-                    return;
-                }
+        tampilkanProduk();
+        tampilkanPilihanProduk();
+        tampilkanKeranjang();
+        tampilkanRiwayat();
+        updateDashboard();
+        updateDashboardTransaksi();
 
-                if (!confirm(
-                    'Restore akan mengganti seluruh data produk dan transaksi saat ini. Lanjutkan?'
-                )) {
-                    return;
-                }
+        alert('Restore data berhasil!');
 
-                produk = data.produk;
-                transaksi = data.transaksi;
+    } catch (error) {
+        alert('File backup tidak dapat dibaca!');
+    }
+}
 
-                simpanDataProduk();
-                simpanDataTransaksi();
-
-                keranjang = [];
-
-                tampilkanProduk();
-                tampilkanPilihanProduk();
-                tampilkanKeranjang();
-                tampilkanRiwayat();
-                updateDashboard();
-                updateDashboardTransaksi();
-
-                alert('Restore data berhasil!');
-
-            } catch (error) {
-                alert('File backup tidak dapat dibaca!');
-            }
-        };
-
-        pembaca.readAsText(file);
-    };
-
-    pilihFile.click();
-}   
 </script>
 
 </body>
