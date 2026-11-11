@@ -593,6 +593,9 @@ function bukaMenu(id, tombol) {
     }
 
     // Perbarui tampilan sesuai menu
+    if (id === 'transaksi') {
+    tampilkanPilihanProduk();
+    }
     if (id === 'riwayat') {
         tampilkanRiwayat();
     }
@@ -670,6 +673,7 @@ function simpanProduk() {
     simpanDataProduk();
     resetFormProduk();
     tampilkanProduk();
+    tampilkanPilihanProduk();
     updateDashboard();
 }
 
@@ -1285,11 +1289,16 @@ document.querySelectorAll('nav button').forEach(tombol => {
 });
 
 
+document.getElementById('halamanLogin').style.display = 'none';
 
-    document.getElementById('halamanLogin').style.display = 'none';
+// Muat ulang data produk untuk menu Kasir
+tampilkanProduk();
+tampilkanPilihanProduk();
+tampilkanKeranjang();
+updateDashboard();
 
-    document.getElementById('pinLogin').value = '';
-
+document.getElementById('pinLogin').value = '';
+    
     alert(
         jenis === 'pemilik'
             ? 'Selamat datang, Pemilik!'
