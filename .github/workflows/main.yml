@@ -1,0 +1,36 @@
+
+name: Build APK Kasir Minimarket
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ambil kode proyek
+        uses: actions/checkout@v4
+
+      - name: Siapkan Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Siapkan Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build APK
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Simpan hasil APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Kasir-Minimarket-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
