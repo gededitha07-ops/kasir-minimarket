@@ -105,6 +105,17 @@ public class MainActivity extends Activity {
             );
         }
     }
+   
+  @Override
+public void onConfigurationChanged(
+    android.content.res.Configuration newConfig
+) {
+    super.onConfigurationChanged(newConfig);
+
+    if (webView != null) {
+        webView.requestLayout();
+    }
+     
 }
  @JavascriptInterface
 public String daftarPrinter() {
