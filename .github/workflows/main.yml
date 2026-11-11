@@ -27,7 +27,11 @@ jobs:
           gradle-version: '8.9'
 
       - name: Build APK
-        run: gradle assembleDebug
+        run: |
+          echo "=== Periksa AndroidManifest.xml ==="
+          cat -A app/src/main/AndroidManifest.xml
+          echo "=== Jalankan Build ==="
+          gradle assembleDebug --stacktrace
 
       - name: Simpan hasil APK
         uses: actions/upload-artifact@v4
