@@ -142,7 +142,8 @@ public String daftarPrinter() {
 
     return daftar.toString();
 } 
- @JavascriptInterface
+
+@JavascriptInterface
 public void hubungkanPrinter(String alamat) {
 
     if (android.os.Build.VERSION.SDK_INT >= 31 &&
@@ -150,11 +151,18 @@ public void hubungkanPrinter(String alamat) {
             Manifest.permission.BLUETOOTH_CONNECT
         ) != PackageManager.PERMISSION_GRANTED) {
 
-        Toast.makeText(
-            this,
-            "Izin Bluetooth belum diberikan",
-            Toast.LENGTH_LONG
-        ).show();
+        runOnUiThread(() -> {
+            Toast.makeText(
+                this,
+                "Izin Bluetooth belum diberikan",
+                Toast.LENGTH_LONG
+            ).show();
+
+            webView.evaluateJavascript(
+                "statusKoneksiPrinter(false)",
+                null
+            );
+        });
 
         return;
     }
@@ -162,6 +170,13 @@ public void hubungkanPrinter(String alamat) {
     new Thread(() -> {
 
         try {
+
+            if (bluetoothSocket != null) {
+                try {
+                    bluetoothSocket.close();
+                } catch (Exception ignored) {
+                }
+            }
 
             BluetoothDevice device =
                 bluetoothAdapter.getRemoteDevice(alamat);
@@ -211,7 +226,8 @@ public void hubungkanPrinter(String alamat) {
         }
 
     }).start();
-} 
+}
+ 
  @JavascriptInterface
 public void cetakBluetooth(String teks) {
 
