@@ -443,6 +443,13 @@ td, th {
     <button onclick="laporanHariIni()">
         Laporan Hari Ini
     </button>
+    <button onclick="cetakLaporan()" style="
+    width:100%;
+    background:#15803d;
+    margin-top:10px;
+">
+    🖨️ CETAK / SIMPAN PDF LAPORAN
+</button>
 
     <div class="item">
         <b>Total Omzet</b>
@@ -986,6 +993,7 @@ function prosesPembayaran() {
 
     simpanDataProduk();
     simpanDataTransaksi();
+    cetakStruk(dataTransaksi);
 
     alert(
         'TRANSAKSI BERHASIL\n\n' +
@@ -1131,7 +1139,80 @@ function laporanHariIni() {
 
     tampilkanLaporan();
 }
+    
+function cetakLaporan() {
 
+    let tanggal = document.getElementById('tanggalLaporan').value;
+
+    if (!tanggal) {
+        alert('Silakan pilih tanggal laporan!');
+        return;
+    }
+
+    let data = transaksi.filter(t => {
+        return t.tanggal.startsWith(tanggal);
+    });
+
+    if (data.length === 0) {
+        alert('Tidak ada transaksi pada tanggal tersebut!');
+        return;
+    }
+
+    let omzet = 0;
+    let modal = 0;
+    let laba = 0;
+
+    data.forEach(t => {
+        omzet += Number(t.total) || 0;
+        modal += Number(t.modal) || 0;
+        laba += Number(t.laba) || 0;
+    });
+
+    let isi = `
+        <h2 style="text-align:center">KASIR MINIMARKET</h2>
+        <h3 style="text-align:center">LAPORAN PENJUALAN</h3>
+        <p>Tanggal: ${tanggal}</p>
+        <hr>
+        <p>Total Omzet: ${rupiah(omzet)}</p>
+        <p>Total Modal: ${rupiah(modal)}</p>
+        <p>Total Keuntungan: ${rupiah(laba)}</p>
+        <p>Jumlah Transaksi: ${data.length}</p>
+        <hr>
+        <p style="text-align:center">Laporan dibuat dari aplikasi Kasir Minimarket</p>
+    `;
+
+    let jendela = window.open('', '_blank');
+
+    if (!jendela) {
+        alert('Tidak dapat membuka halaman cetak!');
+        return;
+    }
+
+    jendela.document.write(`
+        <html>
+        <head>
+            <title>Laporan Penjualan</title>
+            <style>
+                body {
+                    font-family: Arial;
+                    padding: 20px;
+                }
+            </style>
+        </head>
+        <body>
+            ${isi}
+            <script>
+                window.onload = function() {
+                    window.print();
+                };
+            <\/script>
+        </body>
+        </html>
+    `);
+
+    jendela.document.close();
+}
+    
 function tampilkanLaporan() {
     let tanggal = document.getElementById('tanggalLaporan').value;
 
