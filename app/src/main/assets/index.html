@@ -1331,20 +1331,26 @@ tampilkanPilihanProduk();
 tampilkanKeranjang();
 updateDashboardTransaksi();
 tampilkanRiwayat();
- // Kunci aplikasi saat pertama kali dibuka
-penggunaAktif = '';
+ 
+// Kunci aplikasi saat pertama kali dibuka
+document.addEventListener('DOMContentLoaded', function() {
 
-document.getElementById('halamanLogin').style.display = 'flex';
+    penggunaAktif = '';
 
-document.querySelectorAll('.menu').forEach(menu => {
-    menu.classList.remove('active');
+    document.getElementById('halamanLogin').style.display = 'flex';
+
+    document.querySelectorAll('.menu').forEach(menu => {
+        menu.classList.remove('active');
+    });
+
+    document.querySelectorAll('nav button').forEach(tombol => {
+        tombol.style.display = '';
+        tombol.classList.remove('active');
+    });
+
+    document.getElementById('dashboard').classList.add('active');
+
 });
-
-document.querySelectorAll('nav button').forEach(tombol => {
-    tombol.style.display = '';
-    tombol.classList.remove('active');
-});
-
 document.getElementById('dashboard').classList.add('active');  
 function backupData() {
 
