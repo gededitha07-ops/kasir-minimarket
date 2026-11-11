@@ -1013,6 +1013,112 @@ function prosesPembayaran() {
     updateDashboardTransaksi();
 }
 
+ 
+function cetakStruk(data) {
+
+    let daftarBarang = '';
+
+    data.items.forEach(item => {
+        let subtotal = Number(item.harga) * Number(item.jumlah);
+
+        daftarBarang += `
+            <tr>
+                <td>${escapeHTML(item.nama)}</td>
+                <td>${item.jumlah}</td>
+                <td>${rupiah(item.harga)}</td>
+                <td>${rupiah(subtotal)}</td>
+            </tr>
+        `;
+    });
+
+    let isi = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    padding: 15px;
+                    color: #000;
+                }
+
+                h2, h3, p {
+                    text-align: center;
+                    margin: 5px 0;
+                }
+
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 15px;
+                    font-size: 12px;
+                }
+
+                th, td {
+                    border-bottom: 1px dashed #555;
+                    padding: 7px 3px;
+                    text-align: left;
+                }
+
+                .kanan {
+                    text-align: right;
+                }
+
+                .total {
+                    font-size: 18px;
+                    font-weight: bold;
+                }
+            </style>
+        </head>
+        <body>
+            <h2>KASIR MINIMARKET</h2>
+            <p>Struk Pembelian</p>
+            <hr>
+
+            <p>${new Date(data.tanggal).toLocaleString('id-ID')}</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Produk</th>
+                        <th>Qty</th>
+                        <th>Harga</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${daftarBarang}
+                </tbody>
+            </table>
+
+            <hr>
+            <p class="kanan total">
+                Total: ${rupiah(data.total)}
+            </p>
+            <p class="kanan">
+                Dibayar: ${rupiah(data.bayar)}
+            </p>
+            <p class="kanan">
+                Kembalian: ${rupiah(data.kembalian)}
+            </p>
+            <p class="kanan">
+                Metode: ${escapeHTML(data.metode)}
+            </p>
+
+            <hr>
+            <p>Terima kasih telah berbelanja</p>
+        </body>
+        </html>
+    `;
+
+    if (typeof Android !== 'undefined') {
+        Android.cetakHTML(isi, 'Struk-Kasir-Minimarket');
+    } else {
+        alert('Fitur cetak Android tidak tersedia!');
+    }
+}
+   
 function updateDashboardTransaksi() {
 
     let hariIni = new Date().toDateString();
@@ -1139,7 +1245,7 @@ function laporanHariIni() {
 
     tampilkanLaporan();
 }
-    
+ 
 function cetakLaporan() {
 
     let tanggal = document.getElementById('tanggalLaporan').value;
@@ -1150,7 +1256,14 @@ function cetakLaporan() {
     }
 
     let data = transaksi.filter(t => {
-        return t.tanggal.startsWith(tanggal);
+        let tanggalTransaksi = new Date(t.tanggal);
+
+        let tanggalLokal =
+            tanggalTransaksi.getFullYear() + '-' +
+            String(tanggalTransaksi.getMonth() + 1).padStart(2, '0') + '-' +
+            String(tanggalTransaksi.getDate()).padStart(2, '0');
+
+        return tanggalLokal === tanggal;
     });
 
     if (data.length === 0) {
@@ -1169,49 +1282,50 @@ function cetakLaporan() {
     });
 
     let isi = `
-        <h2 style="text-align:center">KASIR MINIMARKET</h2>
-        <h3 style="text-align:center">LAPORAN PENJUALAN</h3>
-        <p>Tanggal: ${tanggal}</p>
-        <hr>
-        <p>Total Omzet: ${rupiah(omzet)}</p>
-        <p>Total Modal: ${rupiah(modal)}</p>
-        <p>Total Keuntungan: ${rupiah(laba)}</p>
-        <p>Jumlah Transaksi: ${data.length}</p>
-        <hr>
-        <p style="text-align:center">Laporan dibuat dari aplikasi Kasir Minimarket</p>
-    `;
-
-    let jendela = window.open('', '_blank');
-
-    if (!jendela) {
-        alert('Tidak dapat membuka halaman cetak!');
-        return;
-    }
-
-    jendela.document.write(`
+        <!DOCTYPE html>
         <html>
         <head>
-            <title>Laporan Penjualan</title>
+            <meta charset="UTF-8">
             <style>
                 body {
-                    font-family: Arial;
+                    font-family: Arial, sans-serif;
                     padding: 20px;
+                    color: black;
+                }
+                h2, h3, p {
+                    text-align: center;
+                }
+                hr {
+                    border: 0;
+                    border-top: 1px dashed black;
                 }
             </style>
         </head>
         <body>
-            ${isi}
-            <script>
-                window.onload = function() {
-                    window.print();
-                };
-            <\/script>
+            <h2>KASIR MINIMARKET</h2>
+            <h3>LAPORAN PENJUALAN</h3>
+            <hr>
+            <p>Tanggal: ${tanggal}</p>
+            <p>Total Omzet: ${rupiah(omzet)}</p>
+            <p>Total Modal: ${rupiah(modal)}</p>
+            <p>Total Keuntungan: ${rupiah(laba)}</p>
+            <p>Jumlah Transaksi: ${data.length}</p>
+            <hr>
+            <p>Laporan dibuat dari aplikasi Kasir Minimarket</p>
         </body>
         </html>
-    `);
+    `;
 
-    jendela.document.close();
+    if (typeof Android !== 'undefined') {
+        Android.cetakHTML(
+            isi,
+            'Laporan-Kasir-Minimarket'
+        );
+    } else {
+        alert('Fitur cetak Android tidak tersedia!');
+    }
 }
+   
     
 function tampilkanLaporan() {
     let tanggal = document.getElementById('tanggalLaporan').value;
