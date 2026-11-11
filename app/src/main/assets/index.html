@@ -1,0 +1,282 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kasir Minimarket</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+header {
+    background: #166534;
+    color: white;
+    padding: 20px;
+}
+
+header h2 {
+    margin: 0;
+}
+
+header p {
+    margin-bottom: 0;
+    font-size: 13px;
+}
+
+.container {
+    padding: 15px;
+    padding-bottom: 85px;
+}
+
+.card {
+    background: white;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 6px #00000010;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.stat {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px #00000010;
+}
+
+.stat h2 {
+    color: #166534;
+    margin: 8px 0 0;
+}
+
+.stat small {
+    color: #64748b;
+}
+
+nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 2px;
+    box-shadow: 0 -2px 8px #00000015;
+    z-index: 10;
+}
+
+nav button {
+    background: none;
+    color: #64748b;
+    padding: 8px 3px;
+    font-size: 11px;
+}
+
+nav button.active {
+    color: #166534;
+    font-weight: bold;
+}
+
+button {
+    border: none;
+    border-radius: 8px;
+    padding: 11px;
+    background: #166534;
+    color: white;
+    cursor: pointer;
+}
+
+input, select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    margin: 6px 0 13px;
+    background: white;
+}
+
+label {
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.menu {
+    display: none;
+}
+
+.menu.active {
+    display: block;
+}
+
+h3 {
+    margin-top: 0;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+td, th {
+    padding: 10px 5px;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: left;
+}
+
+.hidden {
+    display: none;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <h2>🏪 KASIR MINIMARKET</h2>
+    <p>Sistem Kasir dan Manajemen Toko</p>
+</header>
+
+<div class="container">
+
+<section id="dashboard" class="menu active">
+
+    <h3>Dashboard</h3>
+
+    <div class="grid">
+
+        <div class="stat">
+            <small>Jumlah Produk</small>
+            <h2 id="dashProduk">0</h2>
+        </div>
+
+        <div class="stat">
+            <small>Total Stok</small>
+            <h2 id="dashStok">0</h2>
+        </div>
+
+        <div class="stat">
+            <small>Penjualan Hari Ini</small>
+            <h2 id="dashOmzet">Rp0</h2>
+        </div>
+
+        <div class="stat">
+            <small>Transaksi Hari Ini</small>
+            <h2 id="dashTransaksi">0</h2>
+        </div>
+
+    </div>
+
+    <div class="card" style="margin-top:15px">
+        <h3>Stok Menipis</h3>
+        <div id="stokMenipis">Belum ada data</div>
+    </div>
+
+    <div class="card">
+        <h3>Selamat Datang</h3>
+        <p>Gunakan menu di bawah untuk mengelola minimarket Anda.</p>
+    </div>
+
+</section>
+
+<section id="produk" class="menu">
+
+    <h3>Manajemen Produk</h3>
+
+    <div class="card">
+        <p>Fitur pengelolaan produk akan dibuat pada tahap berikutnya.</p>
+        <button onclick="alert('Menu produk siap dikembangkan')">
+            Kelola Produk
+        </button>
+    </div>
+
+</section>
+
+<section id="transaksi" class="menu">
+
+    <h3>Transaksi Penjualan</h3>
+
+    <div class="card">
+        <p>Fitur keranjang belanja dan pembayaran akan dibuat berikutnya.</p>
+    </div>
+
+</section>
+
+<section id="riwayat" class="menu">
+
+    <h3>Riwayat Transaksi</h3>
+
+    <div class="card">
+        <p>Riwayat penjualan akan ditampilkan di sini.</p>
+    </div>
+
+</section>
+
+<section id="laporan" class="menu">
+
+    <h3>Laporan Penjualan</h3>
+
+    <div class="card">
+        <p>Laporan harian dan bulanan akan dibuat berikutnya.</p>
+    </div>
+
+</section>
+
+<section id="pengaturan" class="menu">
+
+    <h3>Pengaturan</h3>
+
+    <div class="card">
+        <p>Pengaturan toko, PIN dan backup data akan dibuat berikutnya.</p>
+    </div>
+
+</section>
+
+</div>
+
+<nav>
+    <button class="active" onclick="bukaMenu('dashboard',this)">🏠<br>Home</button>
+    <button onclick="bukaMenu('produk',this)">📦<br>Produk</button>
+    <button onclick="bukaMenu('transaksi',this)">🛒<br>Kasir</button>
+    <button onclick="bukaMenu('riwayat',this)">📋<br>Riwayat</button>
+    <button onclick="bukaMenu('laporan',this)">📊<br>Laporan</button>
+    <button onclick="bukaMenu('pengaturan',this)">⚙️<br>Setting</button>
+</nav>
+
+<script>
+
+function bukaMenu(id,tombol) {
+
+    document.querySelectorAll('.menu').forEach(el => {
+        el.classList.remove('active');
+    });
+
+    document.getElementById(id).classList.add('active');
+
+    document.querySelectorAll('nav button').forEach(el => {
+        el.classList.remove('active');
+    });
+
+    tombol.classList.add('active');
+}
+
+</script>
+
+</body>
+</html>
