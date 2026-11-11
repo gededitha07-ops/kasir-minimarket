@@ -64,7 +64,16 @@ public class MainActivity extends Activity {
         setContentView(webView);
         webView.loadUrl("file:///android_asset/index.html");
     }
+@JavascriptInterface
+public void pilihRestore() {
+    runOnUiThread(() -> {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("application/json");
 
+        startActivityForResult(intent, REQUEST_RESTORE);
+    });
+}
     @JavascriptInterface
     public void simpanBackup(String isi) {
         runOnUiThread(() -> {
