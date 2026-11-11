@@ -139,44 +139,49 @@ public void pilihRestore() {
         }
     }
 
-    private void bacaFile(Uri uri) {
-        try {
-            InputStream input = getContentResolver()
-                .openInputStream(uri);
+    
+private void bacaFile(Uri uri) {
+    try {
+        InputStream input = getContentResolver()
+            .openInputStream(uri);
 
-            ByteArrayOutputStream buffer =
-                new ByteArrayOutputStream();
-
-            byte[] data = new byte[4096];
-            int jumlah;
-
-            while ((jumlah = input.read(data)) != -1) {
-                buffer.write(data, 0, jumlah);
-            }
-
-            input.close();
-
-            String isi = buffer.toString("UTF-8");
-
-            String hasil = isi
-                .replace("\\", "\\\\")
-                .replace("'", "\\'")
-                .replace("\n", "\\n")
-                .replace("\r", "");
-
-            webView.post(() -> webView.evaluateJavascript(
-                "restoreDariAndroid('" + hasil + "')",
-                null
-            ));
-
-        } catch (Exception e) {
-            Toast.makeText(
-                this,
-                "Gagal membaca file backup",
-                Toast.LENGTH_LONG
-            ).show();
+        if (input == null) {
+            throw new IOException("File tidak dapat dibuka");
         }
+
+        ByteArrayOutputStream buffer =
+            new ByteArrayOutputStream();
+
+        byte[] data = new byte[4096];
+        int jumlah;
+
+        while ((jumlah = input.read(data)) != -1) {
+            buffer.write(data, 0, jumlah);
+        }
+
+        input.close();
+
+        String isi = buffer.toString("UTF-8");
+
+        String javascript =
+            "restoreDariAndroid(" +
+            org.json.JSONObject.quote(isi) +
+            ")";
+
+        webView.post(() -> webView.evaluateJavascript(
+            javascript,
+            null
+        ));
+
+    } catch (Exception e) {
+        Toast.makeText(
+            this,
+            "Gagal membaca file backup",
+            Toast.LENGTH_LONG
+        ).show();
     }
+}
+
 
     @Override
     public void onBackPressed() {
