@@ -541,6 +541,32 @@ td, th {
             Simpan PIN Kasir
         </button>
     </div>
+  <div class="card">
+    <h3>🖨️ Pengaturan Printer Bluetooth</h3>
+
+    <label>Pilih Printer</label>
+    <select id="pilihPrinter">
+        <option value="">Pilih printer Bluetooth</option>
+    </select>
+
+    <button onclick="muatDaftarPrinter()">
+        CARI PRINTER TERPASANG
+    </button>
+
+    <button onclick="sambungkanPrinter()">
+        HUBUNGKAN PRINTER
+    </button>
+
+    <label>Ukuran Kertas</label>
+    <select id="ukuranKertas">
+        <option value="58">58 mm</option>
+        <option value="80">80 mm</option>
+    </select>
+
+    <p id="statusPrinter">
+        Printer belum terhubung
+    </p>
+</div>  
 <div class="card">
     <h3>Backup dan Restore Data</h3>
 
@@ -1635,7 +1661,54 @@ function restoreDariAndroid(isiFile) {
         alert('File backup tidak dapat dibaca!');
     }
 }
+function muatDaftarPrinter() {
 
+    let pilihan = document.getElementById('pilihPrinter');
+
+    pilihan.innerHTML =
+        '<option value="">Pilih printer Bluetooth</option>';
+
+    try {
+
+        let daftar = JSON.parse(Android.daftarPrinter());
+
+        if (daftar.length === 0) {
+            alert('Belum ada printer Bluetooth yang dipasangkan. Pasangkan printer melalui Pengaturan Bluetooth Android terlebih dahulu.');
+            return;
+        }
+
+        daftar.forEach(function(printer) {
+
+            let option = document.createElement('option');
+
+            option.value = printer.alamat;
+            option.textContent = printer.nama;
+
+            pilihan.appendChild(option);
+        });
+
+    } catch (error) {
+        alert('Gagal membaca daftar printer Bluetooth');
+    }
+}
+
+function sambungkanPrinter() {
+
+    let alamat =
+        document.getElementById('pilihPrinter').value;
+
+    if (alamat === '') {
+        alert('Silakan pilih printer terlebih dahulu');
+        return;
+    }
+
+    localStorage.setItem('alamatPrinter', alamat);
+
+    document.getElementById('statusPrinter').textContent =
+        'Sedang menghubungkan printer...';
+
+    Android.hubungkanPrinter(alamat);
+}
 </script>
 
 </body>
