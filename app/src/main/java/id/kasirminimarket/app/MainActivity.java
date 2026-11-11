@@ -150,13 +150,12 @@ public void hubungkanPrinter(String alamat) {
             Manifest.permission.BLUETOOTH_CONNECT
         ) != PackageManager.PERMISSION_GRANTED) {
 
-        runOnUiThread(() ->
-            Toast.makeText(
-                this,
-                "Izin Bluetooth belum diberikan",
-                Toast.LENGTH_LONG
-            ).show()
-        );
+        Toast.makeText(
+            this,
+            "Izin Bluetooth belum diberikan",
+            Toast.LENGTH_LONG
+        ).show();
+
         return;
     }
 
@@ -180,27 +179,39 @@ public void hubungkanPrinter(String alamat) {
             bluetoothSocket = socket;
             printerDevice = device;
 
-            runOnUiThread(() ->
+            runOnUiThread(() -> {
+
                 Toast.makeText(
                     this,
                     "Printer berhasil terhubung",
                     Toast.LENGTH_LONG
-                ).show()
-            );
+                ).show();
+
+                webView.evaluateJavascript(
+                    "statusKoneksiPrinter(true)",
+                    null
+                );
+            });
 
         } catch (Exception e) {
 
-            runOnUiThread(() ->
+            runOnUiThread(() -> {
+
                 Toast.makeText(
                     this,
                     "Gagal menghubungkan printer. Periksa pairing dan printer.",
                     Toast.LENGTH_LONG
-                ).show()
-            );
+                ).show();
+
+                webView.evaluateJavascript(
+                    "statusKoneksiPrinter(false)",
+                    null
+                );
+            });
         }
 
     }).start();
-}  
+} 
  @JavascriptInterface
 public void cetakBluetooth(String teks) {
 
