@@ -268,25 +268,115 @@ td, th {
 </section>
 
 
+
 <section id="transaksi" class="menu">
 
     <h3>Transaksi Penjualan</h3>
 
     <div class="card">
-        <p>Fitur keranjang belanja dan pembayaran akan dibuat berikutnya.</p>
+        <h3>Pilih Produk</h3>
+
+        <label>Nama Produk</label>
+        <select id="pilihProduk"></select>
+
+        <label>Jumlah Barang</label>
+        <input type="number" id="jumlahBeli" value="1" min="1">
+
+        <button onclick="tambahKeKeranjang()" style="width:100%">
+            + TAMBAH KE KERANJANG
+        </button>
     </div>
-
-</section>
-
-<section id="riwayat" class="menu">
-
-    <h3>Riwayat Transaksi</h3>
 
     <div class="card">
-        <p>Riwayat penjualan akan ditampilkan di sini.</p>
+        <h3>Keranjang Belanja</h3>
+
+        <div style="overflow-x:auto">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Produk</th>
+                        <th>Harga</th>
+                        <th>Qty</th>
+                        <th>Subtotal</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="isiKeranjang"></tbody>
+            </table>
+        </div>
+
+        <h3 id="totalBelanja">Total: Rp0</h3>
+    </div>
+
+    <div class="card">
+        <h3>Pembayaran</h3>
+
+        <label>Metode Pembayaran</label>
+        <select id="metodeBayar">
+            <option value="Tunai">Tunai</option>
+            <option value="QRIS">QRIS</option>
+            <option value="Transfer Bank">Transfer Bank</option>
+        </select>
+
+        <label>Jumlah Dibayar</label>
+        <input type="number" id="jumlahBayar"
+            placeholder="Masukkan jumlah pembayaran">
+
+        <button onclick="isiPembayaranPas()" 
+            style="background:#2563eb;width:100%">
+            ISI SESUAI TOTAL
+        </button>
+
+        <h3 id="kembalian">Kembalian: Rp0</h3>
+
+        <button onclick="prosesPembayaran()"
+            style="width:100%;background:#15803d;margin-top:10px">
+            SIMPAN TRANSAKSI
+        </button>
     </div>
 
 </section>
+
+
+<section id="riwayat" class="menu">
+    <h2>Riwayat Transaksi</h2>
+
+    <label>Cari transaksi</label>
+    <input
+        type="text"
+        id="cariTransaksi"
+        placeholder="Cari nomor transaksi..."
+        oninput="tampilkanRiwayat()"
+    >
+
+    <label>Filter tanggal</label>
+    <input
+        type="date"
+        id="tanggalRiwayat"
+        onchange="tampilkanRiwayat()"
+    >
+
+    <button onclick="hapusFilterRiwayat()">
+        Tampilkan Semua
+    </button>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>No.</th>
+                    <th>Tanggal</th>
+                    <th>Total</th>
+                    <th>Metode</th>
+                    <th>Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="daftarRiwayat"></tbody>
+        </table>
+    </div>
+</section>
+
+
 
 <section id="laporan" class="menu">
 
@@ -498,9 +588,338 @@ function updateDashboard() {
             escapeHTML(p.nama) + ' - Stok: ' + p.stok
         ).join('<br>') || 'Tidak ada stok menipis';
 }
+
+let keranjang = [];
+
+let transaksi = JSON.parse(
+    localStorage.getItem('transaksi') || '[]'
+);
+
+function simpanDataTransaksi() {
+    localStorage.setItem(
+        'transaksi',
+        JSON.stringify(transaksi)
+    );
+}
+
+function tampilkanPilihanProduk() {
+
+    let select = document.getElementById('pilihProduk');
+
+    select.innerHTML = '<option value="">Pilih produk</option>';
+
+    produk.forEach((p, i) => {
+        if (Number(p.stok) > 0) {
+            select.innerHTML += `
+                <option value="${i}">
+                    ${escapeHTML(p.nama)} - ${rupiah(p.harga)}
+                    (Stok: ${p.stok})
+                </option>
+            `;
+        }
+    });
+}
+
+function tambahKeKeranjang() {
+
+    let index = document.getElementById('pilihProduk').value;
+    let jumlah = Number(document.getElementById('jumlahBeli').value);
+
+    if (index === '') {
+        alert('Silakan pilih produk');
+        return;
+    }
+
+    if (!Number.isInteger(jumlah) || jumlah < 1) {
+        alert('Jumlah barang tidak valid');
+        return;
+    }
+
+    let p = produk[Number(index)];
+
+    let ada = keranjang.find(
+        item => item.index === Number(index)
+    );
+
+    let jumlahSaatIni = ada ? ada.jumlah : 0;
+
+    if (jumlahSaatIni + jumlah > Number(p.stok)) {
+        alert('Stok tidak mencukupi');
+        return;
+    }
+
+    if (ada) {
+        ada.jumlah += jumlah;
+    } else {
+        keranjang.push({
+            index: Number(index),
+            nama: p.nama,
+            harga: Number(p.harga),
+            modal: Number(p.modal),
+            jumlah: jumlah
+        });
+    }
+
+    document.getElementById('jumlahBeli').value = 1;
+
+    tampilkanKeranjang();
+}
+
+function hitungTotalKeranjang() {
+    return keranjang.reduce(
+        (total, item) => total + item.harga * item.jumlah,
+        0
+    );
+}
+
+function tampilkanKeranjang() {
+
+    let html = '';
+
+    keranjang.forEach((item, i) => {
+
+        let subtotal = item.harga * item.jumlah;
+
+        html += `
+        <tr>
+            <td>${escapeHTML(item.nama)}</td>
+            <td>${rupiah(item.harga)}</td>
+            <td>${item.jumlah}</td>
+            <td>${rupiah(subtotal)}</td>
+            <td>
+                <button
+                    style="background:#dc2626"
+                    onclick="hapusDariKeranjang(${i})">
+                    X
+                </button>
+            </td>
+        </tr>
+        `;
+    });
+
+    document.getElementById('isiKeranjang').innerHTML =
+        html || '<tr><td colspan="5">Keranjang masih kosong</td></tr>';
+
+    document.getElementById('totalBelanja').innerText =
+        'Total: ' + rupiah(hitungTotalKeranjang());
+
+    document.getElementById('kembalian').innerText =
+        'Kembalian: Rp0';
+}
+
+function hapusDariKeranjang(i) {
+    keranjang.splice(i, 1);
+    tampilkanKeranjang();
+}
+
+function isiPembayaranPas() {
+
+    let total = hitungTotalKeranjang();
+
+    document.getElementById('jumlahBayar').value = total;
+
+    document.getElementById('kembalian').innerText =
+        'Kembalian: Rp0';
+}
+
+function prosesPembayaran() {
+
+    if (keranjang.length === 0) {
+        alert('Keranjang masih kosong');
+        return;
+    }
+
+    let total = hitungTotalKeranjang();
+
+    let bayar = Number(
+        document.getElementById('jumlahBayar').value
+    );
+
+    let metode = document.getElementById('metodeBayar').value;
+
+    if (!Number.isFinite(bayar) || bayar < total) {
+        alert('Jumlah pembayaran kurang');
+        return;
+    }
+
+    for (let item of keranjang) {
+        if (!produk[item.index] ||
+            Number(produk[item.index].stok) < item.jumlah) {
+            alert('Stok produk berubah atau tidak mencukupi');
+            tampilkanPilihanProduk();
+            return;
+        }
+    }
+
+    let modalTotal = keranjang.reduce(
+        (jumlah, item) => jumlah + item.modal * item.jumlah,
+        0
+    );
+
+    let kembalian = bayar - total;
+
+    if (metode !== 'Tunai' && kembalian > 0) {
+        alert('Untuk pembayaran non-tunai, masukkan jumlah tepat sesuai total');
+        return;
+    }
+
+    let dataTransaksi = {
+        tanggal: new Date().toISOString(),
+        items: keranjang.map(item => ({...item})),
+        total: total,
+        modal: modalTotal,
+        laba: total - modalTotal,
+        bayar: bayar,
+        kembalian: kembalian,
+        metode: metode
+    };
+
+    keranjang.forEach(item => {
+        produk[item.index].stok -= item.jumlah;
+    });
+
+    transaksi.push(dataTransaksi);
+
+    simpanDataProduk();
+    simpanDataTransaksi();
+
+    alert(
+        'TRANSAKSI BERHASIL\n\n' +
+        'Total: ' + rupiah(total) + '\n' +
+        'Dibayar: ' + rupiah(bayar) + '\n' +
+        'Kembalian: ' + rupiah(kembalian)
+    );
+
+    keranjang = [];
+
+    document.getElementById('jumlahBayar').value = '';
+
+    tampilkanKeranjang();
+    tampilkanProduk();
+    tampilkanPilihanProduk();
+    updateDashboard();
+    updateDashboardTransaksi();
+}
+
+function updateDashboardTransaksi() {
+
+    let hariIni = new Date().toDateString();
+
+    let dataHariIni = transaksi.filter(t =>
+        new Date(t.tanggal).toDateString() === hariIni
+    );
+
+    let omzet = dataHariIni.reduce(
+        (total, t) => total + Number(t.total), 0
+    );
+
+    document.getElementById('dashOmzet').innerText =
+        rupiah(omzet);
+
+    document.getElementById('dashTransaksi').innerText =
+        dataHariIni.length;
+}
+
+function tampilkanRiwayat() {
+    let daftar = document.getElementById('daftarRiwayat');
+    let cari = document.getElementById('cariTransaksi').value.toLowerCase();
+    let tanggal = document.getElementById('tanggalRiwayat').value;
+
+    daftar.innerHTML = '';
+
+    let hasil = transaksi.map((t, index) => ({
+        data: t,
+        index: index
+    })).filter(item => {
+        let t = item.data;
+        let waktu = new Date(t.tanggal);
+
+        let tanggalTransaksi =
+            waktu.getFullYear() + '-' +
+            String(waktu.getMonth() + 1).padStart(2, '0') + '-' +
+            String(waktu.getDate()).padStart(2, '0');
+
+        let nomor = 'TRX-' + waktu.getTime();
+
+        let cocokCari =
+            nomor.toLowerCase().includes(cari) ||
+            String(t.metode || '').toLowerCase().includes(cari);
+
+        let cocokTanggal = !tanggal || tanggal === tanggalTransaksi;
+
+        return cocokCari && cocokTanggal;
+    });
+
+    if (hasil.length === 0) {
+        daftar.innerHTML =
+            '<tr><td colspan="5">Belum ada transaksi</td></tr>';
+        return;
+    }
+
+    hasil.reverse().forEach(item => {
+        let t = item.data;
+        let waktu = new Date(t.tanggal);
+        let nomor = 'TRX-' + waktu.getTime();
+
+        daftar.innerHTML += `
+            <tr>
+                <td>${nomor}</td>
+                <td>${waktu.toLocaleString('id-ID')}</td>
+                <td>${rupiah(t.total)}</td>
+                <td>${escapeHTML(t.metode || '-')}</td>
+                <td>
+                    <button onclick="lihatDetailTransaksi(${item.index})">
+                        Detail
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+function hapusFilterRiwayat() {
+    document.getElementById('cariTransaksi').value = '';
+    document.getElementById('tanggalRiwayat').value = '';
+    tampilkanRiwayat();
+}
+
+function lihatDetailTransaksi(index) {
+    let t = transaksi[index];
+
+    if (!t) {
+        alert('Transaksi tidak ditemukan');
+        return;
+    }
+
+    let rincian = '';
+
+    (t.items || []).forEach(item => {
+        let jumlah = item.jumlah || item.qty || 1;
+        rincian +=
+            (item.nama || 'Produk') +
+            ' x ' + jumlah +
+            ' = ' + rupiah(item.subtotal || item.harga * jumlah) +
+            '\n';
+    });
+
+    alert(
+        'DETAIL TRANSAKSI\n\n' +
+        'Tanggal: ' + new Date(t.tanggal).toLocaleString('id-ID') +
+        '\n\n' + rincian +
+        '\nTotal: ' + rupiah(t.total) +
+        '\nBayar: ' + rupiah(t.bayar) +
+        '\nKembalian: ' + rupiah(t.kembalian) +
+        '\nMetode: ' + (t.metode || '-')
+    );
+}
     
 tampilkanProduk();
 updateDashboard();
+
+tampilkanPilihanProduk();
+tampilkanKeranjang();
+updateDashboardTransaksi();
+tampilkanRiwayat();
 </script>
 
 </body>
