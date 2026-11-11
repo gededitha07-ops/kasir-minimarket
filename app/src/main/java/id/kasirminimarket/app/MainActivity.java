@@ -11,6 +11,9 @@ import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
 import android.webkit.ValueCallback;
 import android.webkit.JavascriptInterface;
+import android.print.PrintManager;
+import android.print.PrintDocumentAdapter;
+import android.content.Context;
 import android.widget.Toast;
 
 import java.io.OutputStream;
@@ -21,6 +24,7 @@ import java.io.IOException;
 public class MainActivity extends Activity {
 
     private WebView webView;
+    private WebView printWebView;
     private ValueCallback<Uri[]> fileCallback;
     private static final int REQUEST_RESTORE = 100;
     private static final int REQUEST_BACKUP = 101;
@@ -64,6 +68,45 @@ public class MainActivity extends Activity {
         setContentView(webView);
         webView.loadUrl("file:///android_asset/index.html");
     }
+@JavascriptInterface
+public void cetakHTML(String html, String namaDokumen) {
+
+    runOnUiThread(() -> {
+
+        printWebView = new WebView(this);
+
+        printWebView.setWebViewClient(new WebViewClient() {
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+
+                android.print.PrintManager printManager =
+                    (android.print.PrintManager)
+                    getSystemService(Context.PRINT_SERVICE);
+
+                PrintDocumentAdapter adapter =
+                    printWebView.createPrintDocumentAdapter(
+                        namaDokumen
+                    );
+
+                printManager.print(
+                    namaDokumen,
+                    adapter,
+                    null
+                );
+            }
+        });
+
+        printWebView.loadDataWithBaseURL(
+            null,
+            html,
+            "text/HTML",
+            "UTF-8",
+            null
+        );
+    });
+}
+    
 @JavascriptInterface
 public void pilihRestore() {
     runOnUiThread(() -> {
