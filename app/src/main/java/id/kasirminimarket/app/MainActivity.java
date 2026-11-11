@@ -106,6 +106,160 @@ public class MainActivity extends Activity {
         }
     }
 }
+ @JavascriptInterface
+public String daftarPrinter() {
+
+    if (bluetoothAdapter == null) {
+        return "[]";
+    }
+
+    if (android.os.Build.VERSION.SDK_INT >= 31 &&
+        checkSelfPermission(
+            Manifest.permission.BLUETOOTH_CONNECT
+        ) != PackageManager.PERMISSION_GRANTED) {
+        return "[]";
+    }
+
+    org.json.JSONArray daftar =
+        new org.json.JSONArray();
+
+    for (BluetoothDevice device :
+        bluetoothAdapter.getBondedDevices()) {
+
+        try {
+            org.json.JSONObject item =
+                new org.json.JSONObject();
+
+            item.put("nama", device.getName());
+            item.put("alamat", device.getAddress());
+
+            daftar.put(item);
+
+        } catch (Exception e) {
+            // Lewati perangkat yang gagal dibaca
+        }
+    }
+
+    return daftar.toString();
+} 
+ @JavascriptInterface
+public void hubungkanPrinter(String alamat) {
+
+    if (android.os.Build.VERSION.SDK_INT >= 31 &&
+        checkSelfPermission(
+            Manifest.permission.BLUETOOTH_CONNECT
+        ) != PackageManager.PERMISSION_GRANTED) {
+
+        runOnUiThread(() ->
+            Toast.makeText(
+                this,
+                "Izin Bluetooth belum diberikan",
+                Toast.LENGTH_LONG
+            ).show()
+        );
+        return;
+    }
+
+    new Thread(() -> {
+
+        try {
+
+            BluetoothDevice device =
+                bluetoothAdapter.getRemoteDevice(alamat);
+
+            java.util.UUID uuid =
+                java.util.UUID.fromString(
+                    "00001101-0000-1000-8000-00805F9B34FB"
+                );
+
+            BluetoothSocket socket =
+                device.createRfcommSocketToServiceRecord(uuid);
+
+            socket.connect();
+
+            bluetoothSocket = socket;
+            printerDevice = device;
+
+            runOnUiThread(() ->
+                Toast.makeText(
+                    this,
+                    "Printer berhasil terhubung",
+                    Toast.LENGTH_LONG
+                ).show()
+            );
+
+        } catch (Exception e) {
+
+            runOnUiThread(() ->
+                Toast.makeText(
+                    this,
+                    "Gagal menghubungkan printer. Periksa pairing dan printer.",
+                    Toast.LENGTH_LONG
+                ).show()
+            );
+        }
+
+    }).start();
+}  
+ @JavascriptInterface
+public void cetakBluetooth(String teks) {
+
+    new Thread(() -> {
+
+        try {
+
+            if (bluetoothSocket == null ||
+                !bluetoothSocket.isConnected()) {
+
+                runOnUiThread(() ->
+                    Toast.makeText(
+                        this,
+                        "Printer belum terhubung",
+                        Toast.LENGTH_LONG
+                    ).show()
+                );
+                return;
+            }
+
+            OutputStream output =
+                bluetoothSocket.getOutputStream();
+
+            // Inisialisasi printer ESC/POS
+            output.write(new byte[]{0x1B, 0x40});
+
+            // Cetak teks
+            output.write(
+                teks.getBytes("UTF-8")
+            );
+
+            // Potong kertas / beri jarak
+            output.write(
+                new byte[]{0x0A, 0x0A, 0x0A}
+            );
+
+            output.flush();
+
+            runOnUiThread(() ->
+                Toast.makeText(
+                    this,
+                    "Berhasil mengirim cetakan ke printer",
+                    Toast.LENGTH_LONG
+                ).show()
+            );
+
+        } catch (Exception e) {
+
+            runOnUiThread(() ->
+                Toast.makeText(
+                    this,
+                    "Gagal mencetak melalui Bluetooth",
+                    Toast.LENGTH_LONG
+                ).show()
+            );
+        }
+
+    }).start();
+}   
 @JavascriptInterface
 public void cetakHTML(String html, String namaDokumen) {
 
