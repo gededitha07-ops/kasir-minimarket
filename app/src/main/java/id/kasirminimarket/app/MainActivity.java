@@ -78,7 +78,8 @@ public class MainActivity extends Activity {
         webView.loadUrl("file:///android_asset/index.html");
         siapkanBluetooth();
     }
-    private void siapkanBluetooth() {
+   
+private void siapkanBluetooth() {
 
     bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
@@ -105,6 +106,8 @@ public class MainActivity extends Activity {
             );
         }
     }
+}
+
    
   @Override
 public void onConfigurationChanged(
