@@ -14,6 +14,11 @@ import android.webkit.JavascriptInterface;
 import android.print.PrintManager;
 import android.print.PrintDocumentAdapter;
 import android.content.Context;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.widget.Toast;
 
 import java.io.OutputStream;
@@ -25,9 +30,13 @@ public class MainActivity extends Activity {
 
     private WebView webView;
     private WebView printWebView;
+    private BluetoothAdapter bluetoothAdapter;
+    private BluetoothSocket bluetoothSocket;
+    private BluetoothDevice printerDevice;
     private ValueCallback<Uri[]> fileCallback;
     private static final int REQUEST_RESTORE = 100;
     private static final int REQUEST_BACKUP = 101;
+    private static final int REQUEST_BLUETOOTH_PERMISSION = 102;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +76,36 @@ public class MainActivity extends Activity {
         webView.addJavascriptInterface(this, "Android");
         setContentView(webView);
         webView.loadUrl("file:///android_asset/index.html");
+        siapkanBluetooth();
     }
+    private void siapkanBluetooth() {
+
+    bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+    if (bluetoothAdapter == null) {
+        Toast.makeText(
+            this,
+            "Tablet tidak mendukung Bluetooth",
+            Toast.LENGTH_LONG
+        ).show();
+        return;
+    }
+
+    if (android.os.Build.VERSION.SDK_INT >= 31) {
+
+        if (checkSelfPermission(
+            Manifest.permission.BLUETOOTH_CONNECT
+        ) != PackageManager.PERMISSION_GRANTED) {
+
+            requestPermissions(
+                new String[]{
+                    Manifest.permission.BLUETOOTH_CONNECT
+                },
+                REQUEST_BLUETOOTH_PERMISSION
+            );
+        }
+    }
+}
 @JavascriptInterface
 public void cetakHTML(String html, String namaDokumen) {
 
@@ -234,4 +272,37 @@ private void bacaFile(Uri uri) {
             super.onBackPressed();
         }
     }
+@Override
+public void onRequestPermissionsResult(
+    int requestCode,
+    String[] permissions,
+    int[] grantResults
+) {
+    super.onRequestPermissionsResult(
+        requestCode,
+        permissions,
+        grantResults
+    );
+
+    if (requestCode == REQUEST_BLUETOOTH_PERMISSION) {
+
+        if (grantResults.length > 0 &&
+            grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+            Toast.makeText(
+                this,
+                "Izin Bluetooth berhasil diberikan",
+                Toast.LENGTH_SHORT
+            ).show();
+
+        } else {
+
+            Toast.makeText(
+                this,
+                "Izin Bluetooth diperlukan untuk printer",
+                Toast.LENGTH_LONG
+            ).show();
+        }
+    }
+}    
 }
