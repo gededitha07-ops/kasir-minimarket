@@ -195,18 +195,78 @@ td, th {
 
 </section>
 
+
 <section id="produk" class="menu">
 
     <h3>Manajemen Produk</h3>
 
     <div class="card">
-        <p>Fitur pengelolaan produk akan dibuat pada tahap berikutnya.</p>
-        <button onclick="alert('Menu produk siap dikembangkan')">
-            Kelola Produk
+
+        <h3 id="judulForm">Tambah Produk</h3>
+
+        <input type="hidden" id="editIndex">
+
+        <label>Nama Produk</label>
+        <input id="namaProduk" placeholder="Masukkan nama produk">
+
+        <label>Kategori</label>
+        <select id="kategoriProduk">
+            <option value="Makanan">Makanan</option>
+            <option value="Minuman">Minuman</option>
+            <option value="Sembako">Sembako</option>
+            <option value="Perlengkapan">Perlengkapan</option>
+            <option value="Lainnya">Lainnya</option>
+        </select>
+
+        <label>Harga Modal</label>
+        <input type="number" id="modalProduk" placeholder="Harga modal">
+
+        <label>Harga Jual</label>
+        <input type="number" id="hargaProduk" placeholder="Harga jual">
+
+        <label>Jumlah Stok</label>
+        <input type="number" id="stokProduk" placeholder="Jumlah stok">
+
+        <button onclick="simpanProduk()" style="width:100%">
+            SIMPAN PRODUK
         </button>
+
+        <button onclick="resetFormProduk()" style="width:100%;background:#64748b;margin-top:8px">
+            BATAL / RESET
+        </button>
+
+    </div>
+
+    <div class="card">
+
+        <h3>Daftar Produk</h3>
+
+        <input
+            id="cariProduk"
+            placeholder="Cari nama produk..."
+            oninput="tampilkanProduk()"
+        >
+
+        <div style="overflow-x:auto">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Produk</th>
+                        <th>Modal</th>
+                        <th>Jual</th>
+                        <th>Stok</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+
+                <tbody id="daftarProduk"></tbody>
+            </table>
+        </div>
+
     </div>
 
 </section>
+
 
 <section id="transaksi" class="menu">
 
@@ -276,6 +336,171 @@ function bukaMenu(id,tombol) {
     tombol.classList.add('active');
 }
 
+let produk = JSON.parse(
+    localStorage.getItem('produk') || '[]'
+);
+
+function simpanDataProduk() {
+    localStorage.setItem(
+        'produk',
+        JSON.stringify(produk)
+    );
+}
+
+function rupiah(angka) {
+    return 'Rp' + Number(angka).toLocaleString('id-ID');
+}
+
+function simpanProduk() {
+
+    let nama = document.getElementById('namaProduk').value.trim();
+    let kategori = document.getElementById('kategoriProduk').value;
+    let modal = Number(document.getElementById('modalProduk').value);
+    let harga = Number(document.getElementById('hargaProduk').value);
+    let stok = Number(document.getElementById('stokProduk').value);
+
+    let index = document.getElementById('editIndex').value;
+
+    if (!nama || !document.getElementById('modalProduk').value ||
+        !document.getElementById('hargaProduk').value ||
+        !document.getElementById('stokProduk').value) {
+        alert('Lengkapi semua data produk');
+        return;
+    }
+
+    if (modal < 0 || harga < 0 || stok < 0) {
+        alert('Nilai tidak boleh negatif');
+        return;
+    }
+
+    if (harga < modal) {
+        if (!confirm('Harga jual lebih rendah dari modal. Lanjutkan?')) {
+            return;
+        }
+    }
+
+    let data = {
+        nama: nama,
+        kategori: kategori,
+        modal: modal,
+        harga: harga,
+        stok: stok
+    };
+
+    if (index === '') {
+        produk.push(data);
+        alert('Produk berhasil ditambahkan');
+    } else {
+        produk[Number(index)] = data;
+        alert('Produk berhasil diperbarui');
+    }
+
+    simpanDataProduk();
+    resetFormProduk();
+    tampilkanProduk();
+    updateDashboard();
+}
+
+function tampilkanProduk() {
+
+    let cari = document.getElementById('cariProduk').value.toLowerCase();
+
+    let html = '';
+
+    produk.forEach((p, i) => {
+
+        if (!p.nama.toLowerCase().includes(cari)) return;
+
+        html += `
+        <tr>
+            <td>${escapeHTML(p.nama)}<br>
+            <small>${escapeHTML(p.kategori)}</small></td>
+
+            <td>${rupiah(p.modal)}</td>
+            <td>${rupiah(p.harga)}</td>
+            <td>${p.stok}</td>
+
+            <td>
+                <button onclick="editProduk(${i})">Edit</button>
+                <button onclick="hapusProduk(${i})"
+                style="background:#dc2626;margin-top:4px">
+                Hapus</button>
+            </td>
+        </tr>
+        `;
+    });
+
+    document.getElementById('daftarProduk').innerHTML =
+        html || '<tr><td colspan="5">Belum ada produk</td></tr>';
+}
+
+function escapeHTML(teks) {
+    return String(teks).replace(/[&<>"']/g, function(c) {
+        return {
+            '&':'&amp;',
+            '<':'&lt;',
+            '>':'&gt;',
+            '"':'&quot;',
+            "'":'&#39;'
+        }[c];
+    });
+}
+
+function editProduk(i) {
+
+    let p = produk[i];
+
+    document.getElementById('editIndex').value = i;
+    document.getElementById('namaProduk').value = p.nama;
+    document.getElementById('kategoriProduk').value = p.kategori;
+    document.getElementById('modalProduk').value = p.modal;
+    document.getElementById('hargaProduk').value = p.harga;
+    document.getElementById('stokProduk').value = p.stok;
+
+    document.getElementById('judulForm').innerText = 'Edit Produk';
+
+    document.getElementById('produk').scrollIntoView();
+}
+
+function hapusProduk(i) {
+
+    if (!confirm('Yakin ingin menghapus produk ini?')) return;
+
+    produk.splice(i, 1);
+
+    simpanDataProduk();
+    tampilkanProduk();
+    updateDashboard();
+
+    alert('Produk berhasil dihapus');
+}
+
+function resetFormProduk() {
+
+    document.getElementById('editIndex').value = '';
+    document.getElementById('namaProduk').value = '';
+    document.getElementById('modalProduk').value = '';
+    document.getElementById('hargaProduk').value = '';
+    document.getElementById('stokProduk').value = '';
+
+    document.getElementById('judulForm').innerText = 'Tambah Produk';
+}
+
+function updateDashboard() {
+
+    document.getElementById('dashProduk').innerText = produk.length;
+
+    document.getElementById('dashStok').innerText =
+        produk.reduce((total, p) => total + Number(p.stok), 0);
+
+    document.getElementById('stokMenipis').innerHTML =
+        produk.filter(p => p.stok <= 5).map(p =>
+            escapeHTML(p.nama) + ' - Stok: ' + p.stok
+        ).join('<br>') || 'Tidak ada stok menipis';
+}
+    
+tampilkanProduk();
+updateDashboard();
 </script>
 
 </body>
